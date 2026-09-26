@@ -8,7 +8,7 @@ UCEP lets a libp2p peer offer **extensions** — small services with named comma
 
 | Document | Content |
 |----------|---------|
-| [ucep.md](./ucep.md) | Core protocol: protocol IDs, discovery, framing, manifest, commands, errors, versioning, limits |
+| [ucep.md](./ucep.md) | Core protocol: protocol IDs, discovery through identify, catalogue and online status, adding providers by PeerId, framing, manifest, commands, errors, versioning, limits, user interface |
 | [ucep-auth.md](./ucep-auth.md) | Pairing (invitation by QR code, or in-band over libp2p), grants, scopes, revocation, optional DID binding |
 | [messages.proto](./messages.proto) | Wire messages (proto3), compatible with the 0.1 draft |
 | [extensions/](./extensions/) | Specified extensions: [`invoice`](./extensions/invoice.md) |

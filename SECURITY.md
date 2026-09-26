@@ -35,6 +35,9 @@ This document lists what UCEP protects against, what it does not, and which rule
 | T14 | The provider's human approves an in-band request without comparing codes. | Approval requires showing, RECOMMENDED typing, the code; the window closes after the first grant. | auth §5.2 |
 | T15 | A relay observes who pairs and talks with whom. | Accepted for this revision: relays see metadata, not content. Prefer direct WebRTC; use relays you operate. | ucep §5.1 |
 | T16 | A document fetched by CID leaks through a public IPFS gateway. | Scoped results are fetched from the provider over Bitswap only, never published to gateways. | ucep §7 |
+| T17 | A peer broadcasts false claims about extensions (its own or another peer's), or floods a pubsub topic with announcements. | UCEP has no broadcast announcements; only identify and the manifest from the provider itself count. | ucep §4 |
+| T18 | A stale catalogue shows a provider as online, or a consumer probes providers constantly. | Status only from live connections and identify; checks on demand, at most once per minute, with backoff. | ucep §4.1 |
+| T19 | A shared provider link is mistaken for an invitation, or an invitation is shared as if it were a provider link. | Different URIs (`web+ucep:peer` vs `web+ucep:pair`); separate *Share* and *Invite* screens. | ucep §4.2, §13.4 |
 
 ## Not covered
 
