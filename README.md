@@ -23,6 +23,7 @@ UCEP lets a libp2p peer offer **extensions** — small services with named comma
 |----------------|------|----------|
 | [js-libp2p-examples: yjs-libp2p spreadsheet](https://github.com/NiKrause/js-libp2p-examples/tree/uc-extensions-service/examples/js-libp2p-example-yjs-libp2p) | Provider (`sheet`) | 0.1 |
 | [Universal Connectivity js-peer](https://github.com/NiKrause/universal-connectivity) | Consumer | 0.1 |
+| [@le-space/ucep](https://github.com/Le-Space/ucep-js) | Reference library: provider and consumer, both pairing modes, DID binding; passes the test vectors | 0.2 |
 | Invoice PWA (Le-Space) | Provider (`invoice`) | planned, 0.2 |
 | Belege (Le-Space) | Consumer (`invoice`) | planned, 0.2 |
 
