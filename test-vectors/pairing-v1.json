@@ -1,0 +1,146 @@
+{
+  "version": "ucep-pair-v1",
+  "keys": {
+    "provider": {
+      "seedHex": "2615bb8227c7a590be0f83a914a4e3e91e29fdd253bcca578d6cf9eb99b8682c",
+      "publicKeyHex": "c31a480bb7522ef27cedc939a21d86515062bcb3fb5595aed9d7edfb6d8d3577",
+      "peerId": "12D3KooWNwxuvbxdgRfVHKgGBXjfEc6VMVT2pKZoKzsqAvNT5jie",
+      "peerIdMultihashHex": "002408011220c31a480bb7522ef27cedc939a21d86515062bcb3fb5595aed9d7edfb6d8d3577"
+    },
+    "consumer": {
+      "seedHex": "085895d656b53da16a7099822a9ea08af3b22b4bcb87a959fad1e7efc2f1cf09",
+      "publicKeyHex": "d9b664ee20468713cdff33ff77029a1844b91ec76eada35c75d02f2dbd7ff37e",
+      "peerId": "12D3KooWQUDx2p8yX9EtS56q3Gs3w4gpPA3n9fQbnudHSj8T9shf",
+      "peerIdMultihashHex": "002408011220d9b664ee20468713cdff33ff77029a1844b91ec76eada35c75d02f2dbd7ff37e"
+    },
+    "consumerDid": {
+      "seedHex": "1c4389f488f75b8885cd4e045688106ef935db04ce26ba57d2f589885975977c",
+      "publicKeyHex": "ea9555d5c319726b3bec6b9fd8aa1413360ee1542db0f5d9cbdfebb9ffe9871c",
+      "did": "did:key:z6MkvEyX6LnU7bzjJzqDnk5RU1vtEMdx28r5icdag6poWtsM"
+    }
+  },
+  "invitation": {
+    "providerPeerId": "12D3KooWNwxuvbxdgRfVHKgGBXjfEc6VMVT2pKZoKzsqAvNT5jie",
+    "extensionId": "invoice",
+    "invitationId": "inv_01J00000000000000000000000",
+    "secretHex": "03a053d771f89020047e20b93faa3764fd881edd2eb5ccb03eda840fdb97f346",
+    "secretB64url": "A6BT13H4kCAEfiC5P6o3ZP2IHt0utcywPtqED9uX80Y",
+    "expiresAt": 1790000000,
+    "scopes": [
+      "invoice:eigenbeleg:create",
+      "invoice:document:read"
+    ],
+    "multiaddr": "/dns4/relay.example.com/tcp/443/wss/p2p/12D3KooWNwxuvbxdgRfVHKgGBXjfEc6VMVT2pKZoKzsqAvNT5jie",
+    "uri": "ucep-pair:12D3KooWNwxuvbxdgRfVHKgGBXjfEc6VMVT2pKZoKzsqAvNT5jie?v=1&ext=invoice&inv=inv_01J00000000000000000000000&s=A6BT13H4kCAEfiC5P6o3ZP2IHt0utcywPtqED9uX80Y&exp=1790000000&scope=invoice%3Aeigenbeleg%3Acreate,invoice%3Adocument%3Aread&addr=%2Fdns4%2Frelay.example.com%2Ftcp%2F443%2Fwss%2Fp2p%2F12D3KooWNwxuvbxdgRfVHKgGBXjfEc6VMVT2pKZoKzsqAvNT5jie"
+  },
+  "vectors": [
+    {
+      "name": "with-did",
+      "description": "Valid pairing request with a consumer DID; provider grants.",
+      "now": 1789999999,
+      "connectionConsumerPeerId": "12D3KooWQUDx2p8yX9EtS56q3Gs3w4gpPA3n9fQbnudHSj8T9shf",
+      "requestedScopes": [
+        "invoice:eigenbeleg:create",
+        "invoice:document:read"
+      ],
+      "did": "did:key:z6MkvEyX6LnU7bzjJzqDnk5RU1vtEMdx28r5icdag6poWtsM",
+      "transcript": "ucep-pair-v1\ninvoice\ninv_01J00000000000000000000000\n12D3KooWNwxuvbxdgRfVHKgGBXjfEc6VMVT2pKZoKzsqAvNT5jie\n12D3KooWQUDx2p8yX9EtS56q3Gs3w4gpPA3n9fQbnudHSj8T9shf\ninvoice:document:read,invoice:eigenbeleg:create\ndid:key:z6MkvEyX6LnU7bzjJzqDnk5RU1vtEMdx28r5icdag6poWtsM",
+      "transcriptHex": "756365702d706169722d76310a696e766f6963650a696e765f30314a30303030303030303030303030303030303030303030300a313244334b6f6f574e7778757662786467526656484b674742586a66456336564d565432704b5a6f4b7a737141764e54356a69650a313244334b6f6f575155447832703879583945745335367133477333773467705041336e396651626e756448536a3854397368660a696e766f6963653a646f63756d656e743a726561642c696e766f6963653a656967656e62656c65673a6372656174650a6469643a6b65793a7a364d6b76457958364c6e5537627a6a4a7a71446e6b355255317674454d647832387235696364616736706f5774734d",
+      "proofHex": "79c597cffde9e4605927738151eecb4f392cb49ba0b2eb3d0999941f63b8c608",
+      "transcriptHashHex": "4e81b1ef628507bbd6fc84074fe029697453e964d186161ba4512157a6fce938",
+      "sas": "122543",
+      "didSignatureHex": "510fc2081de5027317b64f2cd4e0f165d65c897b1deac07af10ad9f10a6d16ed54b210838f636901580b66ed04a90ba497dc3230e5c95cbcbf09e7e2a0cca509",
+      "expected": "GRANTED"
+    },
+    {
+      "name": "without-did",
+      "description": "Valid pairing request without a DID (line 7 empty, no didSignature); provider grants.",
+      "now": 1789999999,
+      "connectionConsumerPeerId": "12D3KooWQUDx2p8yX9EtS56q3Gs3w4gpPA3n9fQbnudHSj8T9shf",
+      "requestedScopes": [
+        "invoice:eigenbeleg:create",
+        "invoice:document:read"
+      ],
+      "did": null,
+      "transcript": "ucep-pair-v1\ninvoice\ninv_01J00000000000000000000000\n12D3KooWNwxuvbxdgRfVHKgGBXjfEc6VMVT2pKZoKzsqAvNT5jie\n12D3KooWQUDx2p8yX9EtS56q3Gs3w4gpPA3n9fQbnudHSj8T9shf\ninvoice:document:read,invoice:eigenbeleg:create\n",
+      "transcriptHex": "756365702d706169722d76310a696e766f6963650a696e765f30314a30303030303030303030303030303030303030303030300a313244334b6f6f574e7778757662786467526656484b674742586a66456336564d565432704b5a6f4b7a737141764e54356a69650a313244334b6f6f575155447832703879583945745335367133477333773467705041336e396651626e756448536a3854397368660a696e766f6963653a646f63756d656e743a726561642c696e766f6963653a656967656e62656c65673a6372656174650a",
+      "proofHex": "0abb3f264b0b10bca5c48d29535c1b9960972f0c9efa2cbf6e09c60a8b37ddde",
+      "transcriptHashHex": "7eed9cb4727ed5e4a445c56082b3b75c12b3803e7ff820107cdc8cfe302bcaca",
+      "sas": "501364",
+      "expected": "GRANTED"
+    },
+    {
+      "name": "wrong-consumer-peer",
+      "description": "Proof computed with the provider's peerId in line 5 instead of the consumer's. The provider rebuilds the transcript with the connection's consumer peerId (connectionConsumerPeerId), so the HMAC does not match.",
+      "now": 1789999999,
+      "connectionConsumerPeerId": "12D3KooWQUDx2p8yX9EtS56q3Gs3w4gpPA3n9fQbnudHSj8T9shf",
+      "requestedScopes": [
+        "invoice:eigenbeleg:create",
+        "invoice:document:read"
+      ],
+      "did": "did:key:z6MkvEyX6LnU7bzjJzqDnk5RU1vtEMdx28r5icdag6poWtsM",
+      "transcript": "ucep-pair-v1\ninvoice\ninv_01J00000000000000000000000\n12D3KooWNwxuvbxdgRfVHKgGBXjfEc6VMVT2pKZoKzsqAvNT5jie\n12D3KooWNwxuvbxdgRfVHKgGBXjfEc6VMVT2pKZoKzsqAvNT5jie\ninvoice:document:read,invoice:eigenbeleg:create\ndid:key:z6MkvEyX6LnU7bzjJzqDnk5RU1vtEMdx28r5icdag6poWtsM",
+      "transcriptHex": "756365702d706169722d76310a696e766f6963650a696e765f30314a30303030303030303030303030303030303030303030300a313244334b6f6f574e7778757662786467526656484b674742586a66456336564d565432704b5a6f4b7a737141764e54356a69650a313244334b6f6f574e7778757662786467526656484b674742586a66456336564d565432704b5a6f4b7a737141764e54356a69650a696e766f6963653a646f63756d656e743a726561642c696e766f6963653a656967656e62656c65673a6372656174650a6469643a6b65793a7a364d6b76457958364c6e5537627a6a4a7a71446e6b355255317674454d647832387235696364616736706f5774734d",
+      "proofHex": "13d6666e3eff1493f0d2dc099f9c2f0c08cf971e2b1547f5fbe1c0ae059dce9f",
+      "transcriptHashHex": "3a870edcc08f7e8716641f3549577438415ad18a59c029ab7eed8184b41cb5f8",
+      "sas": "929692",
+      "didSignatureHex": "556163f010b00220901a2b0156bb3da32dda7e49affbbca65393cf532a95cdce4d7bbdd9c504bf6686d1d1232160e58aaf0612ee8e2a3195cadbe16d8d5cd60a",
+      "expected": "PAIRING_PROOF_INVALID"
+    },
+    {
+      "name": "expired",
+      "description": "Same valid transcript and proof as with-did, but evaluated after expiresAt.",
+      "now": 1790000001,
+      "connectionConsumerPeerId": "12D3KooWQUDx2p8yX9EtS56q3Gs3w4gpPA3n9fQbnudHSj8T9shf",
+      "requestedScopes": [
+        "invoice:eigenbeleg:create",
+        "invoice:document:read"
+      ],
+      "did": "did:key:z6MkvEyX6LnU7bzjJzqDnk5RU1vtEMdx28r5icdag6poWtsM",
+      "transcript": "ucep-pair-v1\ninvoice\ninv_01J00000000000000000000000\n12D3KooWNwxuvbxdgRfVHKgGBXjfEc6VMVT2pKZoKzsqAvNT5jie\n12D3KooWQUDx2p8yX9EtS56q3Gs3w4gpPA3n9fQbnudHSj8T9shf\ninvoice:document:read,invoice:eigenbeleg:create\ndid:key:z6MkvEyX6LnU7bzjJzqDnk5RU1vtEMdx28r5icdag6poWtsM",
+      "transcriptHex": "756365702d706169722d76310a696e766f6963650a696e765f30314a30303030303030303030303030303030303030303030300a313244334b6f6f574e7778757662786467526656484b674742586a66456336564d565432704b5a6f4b7a737141764e54356a69650a313244334b6f6f575155447832703879583945745335367133477333773467705041336e396651626e756448536a3854397368660a696e766f6963653a646f63756d656e743a726561642c696e766f6963653a656967656e62656c65673a6372656174650a6469643a6b65793a7a364d6b76457958364c6e5537627a6a4a7a71446e6b355255317674454d647832387235696364616736706f5774734d",
+      "proofHex": "79c597cffde9e4605927738151eecb4f392cb49ba0b2eb3d0999941f63b8c608",
+      "transcriptHashHex": "4e81b1ef628507bbd6fc84074fe029697453e964d186161ba4512157a6fce938",
+      "sas": "122543",
+      "didSignatureHex": "510fc2081de5027317b64f2cd4e0f165d65c897b1deac07af10ad9f10a6d16ed54b210838f636901580b66ed04a90ba497dc3230e5c95cbcbf09e7e2a0cca509",
+      "expected": "INVITATION_EXPIRED"
+    },
+    {
+      "name": "expires-now",
+      "description": "Evaluated exactly at expiresAt. The rule is now <= expiresAt, so the invitation is still valid.",
+      "now": 1790000000,
+      "connectionConsumerPeerId": "12D3KooWQUDx2p8yX9EtS56q3Gs3w4gpPA3n9fQbnudHSj8T9shf",
+      "requestedScopes": [
+        "invoice:eigenbeleg:create",
+        "invoice:document:read"
+      ],
+      "did": "did:key:z6MkvEyX6LnU7bzjJzqDnk5RU1vtEMdx28r5icdag6poWtsM",
+      "transcript": "ucep-pair-v1\ninvoice\ninv_01J00000000000000000000000\n12D3KooWNwxuvbxdgRfVHKgGBXjfEc6VMVT2pKZoKzsqAvNT5jie\n12D3KooWQUDx2p8yX9EtS56q3Gs3w4gpPA3n9fQbnudHSj8T9shf\ninvoice:document:read,invoice:eigenbeleg:create\ndid:key:z6MkvEyX6LnU7bzjJzqDnk5RU1vtEMdx28r5icdag6poWtsM",
+      "transcriptHex": "756365702d706169722d76310a696e766f6963650a696e765f30314a30303030303030303030303030303030303030303030300a313244334b6f6f574e7778757662786467526656484b674742586a66456336564d565432704b5a6f4b7a737141764e54356a69650a313244334b6f6f575155447832703879583945745335367133477333773467705041336e396651626e756448536a3854397368660a696e766f6963653a646f63756d656e743a726561642c696e766f6963653a656967656e62656c65673a6372656174650a6469643a6b65793a7a364d6b76457958364c6e5537627a6a4a7a71446e6b355255317674454d647832387235696364616736706f5774734d",
+      "proofHex": "79c597cffde9e4605927738151eecb4f392cb49ba0b2eb3d0999941f63b8c608",
+      "transcriptHashHex": "4e81b1ef628507bbd6fc84074fe029697453e964d186161ba4512157a6fce938",
+      "sas": "122543",
+      "didSignatureHex": "510fc2081de5027317b64f2cd4e0f165d65c897b1deac07af10ad9f10a6d16ed54b210838f636901580b66ed04a90ba497dc3230e5c95cbcbf09e7e2a0cca509",
+      "expected": "GRANTED"
+    },
+    {
+      "name": "scope-not-offered",
+      "description": "Requested scopes include invoice:draft:create, which the invitation does not offer. The proof itself is valid.",
+      "now": 1789999999,
+      "connectionConsumerPeerId": "12D3KooWQUDx2p8yX9EtS56q3Gs3w4gpPA3n9fQbnudHSj8T9shf",
+      "requestedScopes": [
+        "invoice:eigenbeleg:create",
+        "invoice:document:read",
+        "invoice:draft:create"
+      ],
+      "did": "did:key:z6MkvEyX6LnU7bzjJzqDnk5RU1vtEMdx28r5icdag6poWtsM",
+      "transcript": "ucep-pair-v1\ninvoice\ninv_01J00000000000000000000000\n12D3KooWNwxuvbxdgRfVHKgGBXjfEc6VMVT2pKZoKzsqAvNT5jie\n12D3KooWQUDx2p8yX9EtS56q3Gs3w4gpPA3n9fQbnudHSj8T9shf\ninvoice:document:read,invoice:draft:create,invoice:eigenbeleg:create\ndid:key:z6MkvEyX6LnU7bzjJzqDnk5RU1vtEMdx28r5icdag6poWtsM",
+      "transcriptHex": "756365702d706169722d76310a696e766f6963650a696e765f30314a30303030303030303030303030303030303030303030300a313244334b6f6f574e7778757662786467526656484b674742586a66456336564d565432704b5a6f4b7a737141764e54356a69650a313244334b6f6f575155447832703879583945745335367133477333773467705041336e396651626e756448536a3854397368660a696e766f6963653a646f63756d656e743a726561642c696e766f6963653a64726166743a6372656174652c696e766f6963653a656967656e62656c65673a6372656174650a6469643a6b65793a7a364d6b76457958364c6e5537627a6a4a7a71446e6b355255317674454d647832387235696364616736706f5774734d",
+      "proofHex": "4e515979fe3cf618bc0cf6de49e6c8207d58363309621d02e40a407abc710f76",
+      "transcriptHashHex": "15a91822e9f2c6eda90acf8f0481b53f7ea85cdab191f6d772559825b566c91b",
+      "sas": "403298",
+      "didSignatureHex": "663f0cea3aa80d9510bee03e7fa286d278b11a0edd137f98c7d832244656d003d80ae5bd2e59bb024433713abaab8e2572c2921396933eea334d975c8c874907",
+      "expected": "SCOPE_NOT_OFFERED"
+    }
+  ]
+}

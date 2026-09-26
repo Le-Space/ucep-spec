@@ -1,0 +1,178 @@
+// Universal Connectivity Extension Protocol (UCEP), wire messages.
+//
+// Status: Working Draft. See ucep.md and ucep-auth.md.
+//
+// Compatibility: every field number of the original draft
+// (js-libp2p-examples, examples/js-libp2p-example-yjs-libp2p/protobuf/extension.proto)
+// keeps its number and meaning. Everything marked "since 0.2" is an
+// addition; a 0.1 peer ignores it (proto3 unknown-field rules).
+
+syntax = "proto3";
+
+package ext;
+
+// ---------------------------------------------------------------- manifest
+
+message ExtensionManifest {
+  string id = 1;                          // [a-z0-9-]{1,64}, equals {extensionId} in the protocol ID
+  string name = 2;                        // human-readable
+  string version = 3;                     // SemVer 2.0.0, equals {version} in the protocol ID
+  string description = 4;
+  string author = 5;
+  string publicUrl = 6;                   // optional UI for the extension
+  repeated ExtensionCommand commands = 7;
+  string icon = 8;                        // https URL or data: URI
+
+  // since 0.2
+  uint32 ucepVersion = 9;                 // highest UCEP wire revision the provider speaks; 0 means 1 (0.1 draft)
+  bool pairingSupported = 10;             // provider accepts PairRequest (ucep-auth.md)
+  repeated ScopeInfo scopes = 11;         // every scope any command may require
+}
+
+message ExtensionCommand {
+  string name = 1;                        // [a-z0-9-]{1,64}
+  string syntax = 2;                      // human hint, e.g. "/invoice-status <documentId>"
+  string description = 3;
+
+  // since 0.2
+  string scope = 4;                       // empty: public; otherwise required scope (ucep-auth.md)
+  string argsSchema = 5;                  // optional JSON Schema (2020-12) for argsJson
+  string resultSchema = 6;                // optional JSON Schema (2020-12) for data
+  bool idempotent = 7;                    // repeating a requestId returns the first result
+}
+
+message ScopeInfo {
+  string name = 1;                        // "<extensionId>:<resource>:<action>"
+  string description = 2;                 // shown to the human who grants it
+}
+
+// ---------------------------------------------------------------- envelope
+
+// Exactly one request per stream, answered by exactly one response;
+// then both sides close the stream (ucep.md, "Streams").
+message Request {
+  oneof payload {
+    ManifestRequest manifest = 1;
+    CommandRequest command = 2;
+    PairRequest pair = 3;                 // since 0.2
+    UnpairRequest unpair = 4;             // since 0.2
+  }
+}
+
+message Response {
+  oneof payload {
+    ManifestResponse manifest = 1;
+    CommandResponse command = 2;
+    PairResponse pair = 3;                // since 0.2
+    UnpairResponse unpair = 4;            // since 0.2
+  }
+}
+
+// ---------------------------------------------------------------- manifest exchange
+
+message ManifestRequest {
+  int64 timestamp = 1;                    // ms since Unix epoch, informational
+}
+
+message ManifestResponse {
+  ExtensionManifest manifest = 1;
+  int64 timestamp = 2;
+}
+
+// ---------------------------------------------------------------- commands
+
+message CommandRequest {
+  string requestId = 1;                   // unique per consumer, <= 128 bytes; ULID or UUID recommended
+  string extensionId = 2;
+  string command = 3;
+  repeated string args = 4;               // 0.1 style positional arguments
+  int64 timestamp = 5;
+
+  // since 0.2
+  optional string argsJson = 6;           // JSON object; if set, args MUST be empty
+}
+
+message CommandResponse {
+  string requestId = 1;
+  bool success = 2;
+  optional string data = 3;               // JSON-encoded result
+  optional string error = 4;              // human-readable message
+  int64 timestamp = 5;
+
+  // since 0.2
+  ErrorCode errorCode = 6;                // machine-readable, set whenever success = false
+}
+
+enum ErrorCode {
+  ERROR_UNSPECIFIED = 0;                  // 0.1 providers; treat as INTERNAL
+  UNKNOWN_EXTENSION = 1;
+  UNKNOWN_COMMAND = 2;
+  INVALID_ARGUMENTS = 3;
+  PAIRING_REQUIRED = 4;                   // command needs a scope and the peer holds no grant
+  SCOPE_MISSING = 5;                      // peer holds a grant, but not this scope
+  GRANT_EXPIRED = 6;
+  RATE_LIMITED = 7;
+  TOO_LARGE = 8;
+  INTERNAL = 9;
+  UNAVAILABLE = 10;                       // provider temporarily cannot serve (e.g. locked vault)
+
+  // pairing (ucep-auth.md)
+  INVITATION_UNKNOWN = 20;
+  INVITATION_EXPIRED = 21;
+  INVITATION_USED = 22;
+  PAIRING_PROOF_INVALID = 23;
+  SCOPE_NOT_OFFERED = 24;
+  DID_SIGNATURE_INVALID = 25;
+  PAIRING_DENIED = 26;
+}
+
+// ---------------------------------------------------------------- pairing (since 0.2)
+
+message PairRequest {
+  string extensionId = 1;
+  string invitationId = 2;
+  repeated string scopes = 3;             // subset of the invitation's scopes
+  bytes proof = 4;                        // HMAC-SHA256(secret, transcript), 32 bytes
+  string label = 5;                       // shown to the provider's human, e.g. "Belege, Laptop", <= 64 chars
+  string did = 6;                         // optional DID of the consumer's user
+  DidProof didProof = 7;                  // required iff did is set
+  int64 timestamp = 8;
+}
+
+message DidProof {
+  enum Format {
+    FORMAT_UNSPECIFIED = 0;
+    RAW = 1;                              // signature over transcriptHash with the DID's key
+    WEBAUTHN = 2;                         // WebAuthn assertion, challenge = transcriptHash
+  }
+  Format format = 1;
+  bytes signature = 2;
+  bytes authenticatorData = 3;            // WEBAUTHN only
+  bytes clientDataJSON = 4;               // WEBAUTHN only
+}
+
+message PairResponse {
+  enum Status {
+    STATUS_UNSPECIFIED = 0;
+    GRANTED = 1;
+    PENDING = 2;                          // waiting for the provider's human; retry the same PairRequest
+    DENIED = 3;
+  }
+  Status status = 1;
+  string grantId = 2;                     // set when GRANTED
+  repeated string scopes = 3;             // scopes actually granted
+  int64 expiresAt = 4;                    // grant expiry, ms since epoch; 0 = no expiry
+  ErrorCode errorCode = 5;                // set when DENIED
+  string error = 6;
+  int64 retryAfterMs = 7;                 // set when PENDING
+}
+
+message UnpairRequest {
+  string grantId = 1;
+  int64 timestamp = 2;
+}
+
+message UnpairResponse {
+  bool success = 1;
+  ErrorCode errorCode = 2;
+}

@@ -1,0 +1,28 @@
+@page { size: A4; margin: 20mm 18mm 22mm; }
+
+html { font: 10pt/1.5 "Helvetica Neue", Helvetica, Arial, sans-serif; color: #1a1a1a; }
+body { max-width: none; margin: 0; padding: 0; }
+
+header#title-block-header { margin: 30mm 0 12mm; }
+h1.title { font-size: 24pt; line-height: 1.2; margin: 0 0 4mm; }
+p.subtitle { font-size: 11pt; color: #555; margin: 0; }
+
+nav#TOC { page-break-after: always; }
+nav#TOC::before { content: "Contents"; display: block; font-weight: 600; font-size: 13pt; margin-bottom: 3mm; }
+nav#TOC ul { list-style: none; padding-left: 0; }
+nav#TOC a { color: inherit; text-decoration: none; }
+
+h1 { font-size: 17pt; margin: 0 0 4mm; page-break-before: always; border-bottom: 1px solid #ccc; padding-bottom: 2mm; }
+h2 { font-size: 13pt; margin: 7mm 0 2mm; page-break-after: avoid; }
+h3 { font-size: 11pt; margin: 5mm 0 2mm; page-break-after: avoid; }
+
+a { color: #1f5fa8; text-decoration: none; }
+p, li { orphans: 3; widows: 3; }
+
+code { font: 8.6pt/1.45 Menlo, "SF Mono", Consolas, monospace; background: #f3f3f3; padding: 0 2px; border-radius: 2px; }
+pre { background: #f6f6f6; border: 1px solid #e2e2e2; border-radius: 3px; padding: 3mm; white-space: pre-wrap; word-break: break-word; page-break-inside: avoid; }
+pre code { background: none; padding: 0; }
+
+table { border-collapse: collapse; width: 100%; margin: 3mm 0; font-size: 9pt; page-break-inside: avoid; }
+th, td { border: 1px solid #d6d6d6; padding: 1.5mm 2mm; vertical-align: top; text-align: left; }
+th { background: #f0f0f0; }
