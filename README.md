@@ -1,5 +1,7 @@
 # UCEP: Universal Connectivity Extension Protocol
 
+[![Sponsor](https://img.shields.io/github/sponsors/Le-Space?label=Sponsor&logo=githubsponsors&color=EA4AAA)](https://github.com/sponsors/Le-Space)
+
 UCEP lets a libp2p peer offer **extensions** — small services with named commands — that any other peer can discover and call, with no registry or server in between. It is written for browser-to-browser and mobile-to-mobile peers, connected over WebRTC or through a circuit relay. Discovery rides on libp2p identify; every call is one request and one response on a short-lived stream; commands that change state or reveal data require a **grant** obtained by pairing.
 
 **Status: Working Draft, wire revision 2.** Expect changes; feedback is welcome as issues and pull requests.
