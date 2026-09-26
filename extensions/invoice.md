@@ -73,7 +73,7 @@ Arguments:
 | `counterparty` | As far as known. OPTIONAL. |
 | `reference` | The consumer's own record ID, printed on the document so it can be matched back. OPTIONAL. |
 
-The provider fills in the issuer (its own company details), assigns the next number in its self-receipt number range, records the grant's label and bound DID as the requesting app and user, renders the PDF, and stores the document.
+The provider fills in the issuer (its own company details), assigns the next number in its self-receipt number range, records the grant's label and, if one was bound, its DID as the requesting app and user, renders the PDF, and stores the document.
 
 Result:
 
@@ -107,7 +107,7 @@ Result: `{ "documentId", "kind": "eigenbeleg" | "invoice", "state": "draft" | "a
 ### `get-pdf` (scope `invoice:document:read`)
 
 Arguments: `{ "documentId": "…" }`.
-Result: `{ "mime", "cid", "size", "sha256" }`, and additionally `base64` if the PDF is smaller than 700 KiB (so the response stays within 1 MiB). Larger files are fetched by CID.
+Result: `{ "mime", "cid", "size", "sha256" }`, and additionally `base64` if the PDF is smaller than 700 KiB **and** the connection is direct (so the response stays within 1 MiB). On a relayed connection, and for larger files, the consumer fetches the file by CID over Bitswap from the provider ([ucep.md §5.1](../ucep.md#51-browser-mobile-and-relayed-connections), [§7](../ucep.md#7-commands)). The provider never publishes documents to public gateways.
 
 ## Errors
 

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 // Universal Connectivity Extension Protocol (UCEP), wire messages.
 //
 // Status: Working Draft. See ucep.md and ucep-auth.md.
@@ -25,8 +26,14 @@ message ExtensionManifest {
 
   // since 0.2
   uint32 ucepVersion = 9;                 // highest UCEP wire revision the provider speaks; 0 means 1 (0.1 draft)
-  bool pairingSupported = 10;             // provider accepts PairRequest (ucep-auth.md)
+  repeated PairingMode pairingModes = 10; // pairing modes the provider accepts; empty = no pairing
   repeated ScopeInfo scopes = 11;         // every scope any command may require
+}
+
+enum PairingMode {
+  PAIRING_MODE_UNSPECIFIED = 0;
+  INVITATION = 1;                         // QR code / link with a one-time secret (ucep-auth.md §5.1)
+  IN_BAND = 2;                            // over libp2p with SAS comparison (ucep-auth.md §5.2)
 }
 
 message ExtensionCommand {
@@ -124,19 +131,27 @@ enum ErrorCode {
   SCOPE_NOT_OFFERED = 24;
   DID_SIGNATURE_INVALID = 25;
   PAIRING_DENIED = 26;
+  PAIRING_DISABLED = 27;                  // in-band outside a pairing window, or mode not offered
+  PAIRING_UNKNOWN = 28;                   // in-band: no such pending pairing for this peer
+  COMMITMENT_MISMATCH = 29;               // in-band: reveal does not match the commitment
 }
 
 // ---------------------------------------------------------------- pairing (since 0.2)
 
+// Invitation mode: invitationId + proof.
+// In-band step 1: commitment only. In-band step 2: pairingId + nonce (+ did, didProof).
 message PairRequest {
   string extensionId = 1;
-  string invitationId = 2;
+  string invitationId = 2;                // invitation mode only
   repeated string scopes = 3;             // subset of the invitation's scopes
-  bytes proof = 4;                        // HMAC-SHA256(secret, transcript), 32 bytes
+  bytes proof = 4;                        // invitation mode: HMAC-SHA256(secret, transcript), 32 bytes
   string label = 5;                       // shown to the provider's human, e.g. "Belege, Laptop", <= 64 chars
   string did = 6;                         // optional DID of the consumer's user
   DidProof didProof = 7;                  // required iff did is set
   int64 timestamp = 8;
+  bytes commitment = 9;                   // in-band step 1: SHA-256(nonceC)
+  bytes nonce = 10;                       // in-band step 2: nonceC, 32 bytes
+  string pairingId = 11;                  // in-band step 2
 }
 
 message DidProof {
@@ -165,6 +180,8 @@ message PairResponse {
   ErrorCode errorCode = 5;                // set when DENIED
   string error = 6;
   int64 retryAfterMs = 7;                 // set when PENDING
+  string pairingId = 8;                   // in-band: set in the answer to step 1
+  bytes nonce = 9;                        // in-band: nonceP, set in the answer to step 1
 }
 
 message UnpairRequest {

@@ -17,6 +17,7 @@ See the [lifecycle document][lifecycle] for context about the maturity level and
 - [3. Protocol ID](#3-protocol-id)
 - [4. Discovery](#4-discovery)
 - [5. Streams and framing](#5-streams-and-framing)
+  - [5.1 Browser, mobile and relayed connections](#51-browser-mobile-and-relayed-connections)
 - [6. Manifest](#6-manifest)
 - [7. Commands](#7-commands)
 - [8. Errors](#8-errors)
@@ -93,7 +94,22 @@ Several peers MAY provide the same extension ID. A consumer MAY treat them as in
 - If a request cannot be parsed, the provider SHOULD reset the stream.
 - The provider MUST apply a read timeout. RECOMMENDED: 10 seconds to receive the request, and at most 60 seconds to answer. Commands that take longer MUST return promptly with a handle the consumer can poll with a second command (see the `invoice` extension's `status` command for an example).
 
-Streams run over the connection's secure channel (Noise or TLS). The provider therefore knows the consumer's **authenticated** PeerId (`connection.remotePeer`); this is the identity every authorization decision uses.
+Streams run over the connection's secure channel: Noise on WebSockets, WebTransport and browser-to-browser WebRTC, or TLS. The provider therefore knows the consumer's **authenticated** PeerId (`connection.remotePeer`); this is the identity every authorization decision uses.
+
+### 5.1 Browser, mobile and relayed connections
+
+This revision is written for peers that run **in browsers and mobile apps**. Such peers cannot accept incoming connections; they reach each other
+
+- **directly**, over WebRTC, with the connection set up (signalled) through a circuit relay v2 relay: multiaddr `…/p2p/<relayId>/p2p-circuit/webrtc/p2p/<peerId>`; or
+- **through the relay**, over a relayed connection: `…/p2p/<relayId>/p2p-circuit/p2p/<peerId>`.
+
+Other transports (TCP, QUIC between servers) work unchanged, but nothing in this revision depends on them. Requirements:
+
+1. **Limited connections.** Relayed connections are *limited*: relays cap their duration and the bytes they carry (js-libp2p defaults: 2 minutes, 128 KiB). Providers MUST accept, and consumers MUST be able to open, UCEP streams on limited connections (js-libp2p: `runOnLimitedConnection: true` for `handle` and `dialProtocol`), so that the manifest and pairing work before a direct connection exists.
+2. **Prefer direct.** A consumer SHOULD open a direct WebRTC connection (dial the `/p2p-circuit/webrtc/` address) before it calls commands, and MUST do so before a command whose result may exceed 64 KiB. On a limited connection a provider MUST NOT send a response larger than 64 KiB; it answers `TOO_LARGE` instead, and the consumer retries after upgrading.
+3. **Relays see metadata.** A relay cannot read UCEP messages, but it learns which peers talk to each other, when, and how much. It also takes part in identify, so it learns which extensions a peer serves.
+4. **Peers come and go.** Browser tabs close and mobile apps are suspended in the background; their relay reservations lapse. Consumers MUST expect a provider to be unreachable, SHOULD retry idempotent commands with the same `requestId`, and SHOULD tell their user that the other app must be open. Pairing requires both apps to be open and in the foreground.
+5. **Stable identity.** Grants are bound to PeerIds ([ucep-auth.md §6](./ucep-auth.md#6-authorizing-commands)). A browser or mobile app that wants to keep its grants MUST keep its libp2p private key across reloads and restarts ([ucep-auth.md §11](./ucep-auth.md#11-storage)).
 
 ## 6. Manifest
 
@@ -102,7 +118,7 @@ A consumer asks for the manifest with `Request { manifest: ManifestRequest }`; t
 The manifest describes the extension: `id`, `name`, `version`, `description`, `author`, `publicUrl`, `icon`, and the list of `commands`. Since revision 0.2 it also carries:
 
 - `ucepVersion`: the highest UCEP wire revision the provider speaks. `0` (absent) means the 0.1 draft; this document is revision `2`.
-- `pairingSupported`: whether the provider accepts `PairRequest`.
+- `pairingModes`: the pairing modes the provider accepts (`INVITATION`, `IN_BAND`); empty means no pairing.
 - `scopes`: every scope any command may require, with a human description.
 - per command: `scope` (empty means public), `argsSchema` and `resultSchema` (JSON Schema 2020-12, optional), and `idempotent`.
 
@@ -131,7 +147,7 @@ The provider answers with `Response { command: CommandResponse }`, repeating the
 
 **Authorization.** Before executing a command whose manifest entry has a non-empty `scope`, the provider MUST check the grant of the authenticated remote PeerId as defined in [ucep-auth.md §6](./ucep-auth.md#6-authorizing-commands). A command with an empty `scope` is public.
 
-**Large results.** A result larger than the limits in [§11](#11-limits) SHOULD be returned by reference: a CID the consumer can fetch over Bitswap or HTTP gateway, together with its size and SHA-256.
+**Large results.** A result larger than the limits in [§11](#11-limits) SHOULD be returned by reference: a CID with its size and SHA-256, which the consumer fetches from the provider over Bitswap on the same, direct connection. A provider MUST NOT publish the content of a scoped command's result to public IPFS gateways or pinning services; anyone who learned the CID could fetch it there.
 
 ## 8. Errors
 
@@ -153,7 +169,7 @@ Pairing error codes are listed in [ucep-auth.md §7](./ucep-auth.md#7-errors).
 
 ## 9. Authorization
 
-Pairing, grants, scopes and revocation are specified in [ucep-auth.md](./ucep-auth.md). In short: a provider's human creates an **invitation** (QR code or link) with an expiry, a one-time secret and a set of offered scopes; the consumer proves it holds the secret with a `PairRequest` bound to both authenticated PeerIds; the provider stores a **grant** for the consumer's PeerId; later commands are allowed if the grant holds the command's scope.
+Pairing, grants, scopes and revocation are specified in [ucep-auth.md](./ucep-auth.md). In short: pairing works either with an **invitation** (QR code or link with an expiry, a one-time secret and offered scopes; the consumer proves it holds the secret with a `PairRequest` bound to both authenticated PeerIds) or **in-band** over libp2p (both apps show a six-digit code derived by commit and reveal, and the provider's human approves if they match). Either way the provider stores a **grant** for the consumer's PeerId; later commands are allowed if the grant holds the command's scope.
 
 ## 10. Versioning and compatibility
 
@@ -177,7 +193,7 @@ Unless an extension documents otherwise:
 | Item | Limit |
 |------|-------|
 | Request message | 64 KiB |
-| Response message | 1 MiB |
+| Response message | 1 MiB on a direct connection, 64 KiB on a limited (relayed) one |
 | `requestId` | 128 bytes |
 | Manifest `icon` (`data:` URI) | 32 KiB |
 | Concurrent streams per peer and protocol | 8 (providers MAY reject further streams) |
@@ -189,7 +205,7 @@ A provider MUST reject a longer length prefix before buffering the message.
 See [SECURITY.md](./SECURITY.md) for the threat model. The essentials:
 
 - **Identity is the PeerId of the secure channel.** Anything a peer writes into a message (a DID, a label, a name) is a claim until verified as in [ucep-auth.md](./ucep-auth.md).
-- **Discovery is public.** Identify tells every connected peer which extensions a node serves. A node that wants to hide an extension MUST NOT register its protocol ID on connections it does not trust.
+- **Discovery is public.** Identify tells every connected peer — relays included — which extensions a node serves. libp2p registers protocol handlers per node, not per connection, so a node cannot hide an extension from some peers; it serves an extension only while it is willing to be seen offering it.
 - **Results are untrusted input.** Consumers MUST validate `data` against the `resultSchema` or their own expectations and MUST NOT execute or render it unescaped.
 - **Rate limiting.** Providers SHOULD limit requests per PeerId and pairing attempts per invitation.
 
@@ -201,9 +217,10 @@ The 0.1 draft is the protocol implemented in `NiKrause/js-libp2p-examples` (bran
 2. adds `ErrorCode`;
 3. adds `argsJson` and optional JSON Schemas for arguments and results;
 4. adds `idempotent` and the 24-hour replay rule;
-5. adds `ucepVersion` and `pairingSupported` to the manifest;
+5. adds `ucepVersion` and `pairingModes` to the manifest, and in-band pairing;
 6. requires the provider to always answer (no silent "ignore");
-7. defines limits and SemVer matching of the protocol ID.
+7. defines limits and SemVer matching of the protocol ID;
+8. states the rules for browser, mobile and relayed connections.
 
 All 0.1 field numbers are unchanged.
 

@@ -1,6 +1,6 @@
 # UCEP: Universal Connectivity Extension Protocol
 
-UCEP lets a libp2p peer offer **extensions** — small services with named commands — that any other peer can discover and call, with no registry or server in between. Discovery rides on libp2p identify; every call is one request and one response on a short-lived stream; commands that change state or reveal data require a **grant** obtained by pairing.
+UCEP lets a libp2p peer offer **extensions** — small services with named commands — that any other peer can discover and call, with no registry or server in between. It is written for browser-to-browser and mobile-to-mobile peers, connected over WebRTC or through a circuit relay. Discovery rides on libp2p identify; every call is one request and one response on a short-lived stream; commands that change state or reveal data require a **grant** obtained by pairing.
 
 **Status: Working Draft, wire revision 2.** Expect changes; feedback is welcome as issues and pull requests.
 
@@ -9,7 +9,7 @@ UCEP lets a libp2p peer offer **extensions** — small services with named comma
 | Document | Content |
 |----------|---------|
 | [ucep.md](./ucep.md) | Core protocol: protocol IDs, discovery, framing, manifest, commands, errors, versioning, limits |
-| [ucep-auth.md](./ucep-auth.md) | Pairing, grants, scopes, revocation, optional DID binding |
+| [ucep-auth.md](./ucep-auth.md) | Pairing (invitation by QR code, or in-band over libp2p), grants, scopes, revocation, optional DID binding |
 | [messages.proto](./messages.proto) | Wire messages (proto3), compatible with the 0.1 draft |
 | [extensions/](./extensions/) | Specified extensions: [`invoice`](./extensions/invoice.md) |
 | [test-vectors/](./test-vectors/) | Deterministic vectors for the pairing proof, with the generator |
@@ -36,4 +36,5 @@ Needs `pandoc` and Google Chrome or Chromium. Writes `build/ucep-spec.pdf`.
 
 ## License
 
-To be decided before the first publication.
+- The specification text (all `.md` files) is licensed under [Creative Commons Attribution 4.0 International](./LICENSE-CC-BY-4.0) (CC-BY-4.0): use, adapt and redistribute it, also commercially, with attribution to "Le-Space contributors, UCEP" and a link to this repository.
+- Code — [`messages.proto`](./messages.proto), [`test-vectors/`](./test-vectors/) and [`build/`](./build/) — is licensed under the [MIT License](./LICENSE-MIT), so implementations can copy it without friction.

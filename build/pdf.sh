@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# SPDX-License-Identifier: MIT
 # Builds build/ucep-spec.pdf from the Markdown sources.
 # Needs pandoc and Google Chrome (or Chromium; set CHROME=/path/to/binary).
 set -euo pipefail
@@ -37,7 +38,7 @@ pandoc "$tmp/spec.md" \
   -f markdown+gfm_auto_identifiers+pipe_tables+backtick_code_blocks \
   -t html5 --standalone --embed-resources \
   --metadata title="Universal Connectivity Extension Protocol (UCEP)" \
-  --metadata subtitle="Working Draft, wire revision 2 · $(date +%Y-%m-%d) · $rev" \
+  --metadata subtitle="Working Draft, wire revision 2 · $(date +%Y-%m-%d) · $rev · Text CC-BY-4.0, code MIT" \
   --toc --toc-depth=1 \
   --syntax-highlighting=tango \
   --css "$root/build/print.css" \
