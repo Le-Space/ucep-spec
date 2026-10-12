@@ -2,11 +2,11 @@
 
 | Extension ID | Version | Status | Scopes |
 |--------------|---------|--------|--------|
-| `invoice` | 0.2.0 | Working Draft | yes |
+| `invoice` | 0.3.0 | Working Draft | yes |
 
-Protocol ID: `/uc/extension/invoice/0.2.0`
+Protocol ID: `/uc/extension/invoice/0.3.0`
 
-An invoicing app offers this extension so that other apps — typically a bookkeeping app — can ask it to create documents: a **self-issued receipt** (German *Eigenbeleg*) for a payment that has no third-party receipt, or an **invoice draft** the user finishes and issues in the invoicing app. Since 0.2.0 the bookkeeping app can also read the **issued invoices** and tell the invoicing app which of them were **paid**, and when: it holds the bank statements, the invoicing app does not. The reference provider is the Invoice PWA (Le-Space); the reference consumer is Belege.
+An invoicing app offers this extension so that other apps — typically a bookkeeping app — can ask it to create documents: a **self-issued receipt** (German *Eigenbeleg*) for a payment that has no third-party receipt, or an **invoice draft** the user finishes and issues in the invoicing app. Since 0.2.0 the bookkeeping app can also read the **issued invoices** and tell the invoicing app which of them were **paid**, and when: it holds the bank statements, the invoicing app does not. Since 0.3.0 a listed invoice carries its **VAT per rate** and the customer's **VAT ID**, so the bookkeeping app can show output VAT, the VAT payable and the intra-EU supplies for the EC Sales List without reading the PDF. The reference provider is the Invoice PWA (Le-Space); the reference consumer is Belege.
 
 All examples use made-up data.
 
@@ -126,8 +126,12 @@ Result:
       "state": "issued",
       "issuedOn": "2026-09-01",
       "dueOn": "2026-09-15",
-      "customer": { "name": "Beispiel Kunde GmbH" },
+      "customer": { "name": "Beispiel Kunde GmbH", "vatId": "DE000000000" },
       "total": { "value": "119.00", "currency": "EUR" },
+      "net": { "value": "100.00", "currency": "EUR" },
+      "vat": [
+        { "rate": "19", "category": "S", "amount": { "value": "19.00", "currency": "EUR" } }
+      ],
       "paid": { "value": "0.00", "currency": "EUR" },
       "payments": []
     }
@@ -140,11 +144,21 @@ Result:
 |-------|------|
 | `state` | `issued` or `cancelled`. Drafts are never listed. |
 | `dueOn` | The issue date plus the payment terms. OPTIONAL. |
+| `customer.vatId` | The customer's VAT ID as printed on the invoice (BT-48). OPTIONAL; absent when the invoice names none. Since 0.3.0. |
 | `total` | The gross amount the customer owes. |
+| `net` | The total without VAT (BT-109). OPTIONAL. Since 0.3.0. |
+| `vat` | The VAT per rate and category, as the invoice's VAT breakdown (BG-23): `rate` the percentage as a decimal string (BT-119: `"19"`, `"7"`, `"0"`), `category` the code of UNTDID 5305 as EN 16931 uses it (BT-118: `S` standard, `Z` zero, `E` exempt – also a small business under §19 UStG –, `AE` reverse charge, `K` intra-EU supply, `G` export, `O` not subject to VAT), `amount` the VAT of that group (BT-117) in the invoice's currency. OPTIONAL. Since 0.3.0. |
 | `paid`, `payments` | What `record-payment` recorded: the sum, and each payment as `{ "paidOn", "amount", "reference" }`. |
 | `next` | A cursor for the next page, or `null`. |
 
 The PDF of a listed invoice is fetched with `get-pdf`; a grant with `invoice:issued:read` covers it.
+
+On `net` and `vat` (since 0.3.0):
+
+- **Absent `vat` means "not said"**, never "no VAT": a 0.2.0 provider, or an invoice whose breakdown the provider cannot give. The consumer MUST NOT count such an invoice as carrying no VAT.
+- **An invoice without VAT** lists its breakdown with amount 0 and the category that says why (`E`, `AE`, `K`, `G`, `O`, `Z`), so the consumer can tell a small business from a reverse charge or an export. A provider that has no category for it MAY send `"vat": []`.
+- **Exact amounts:** `net` plus the sum of `vat[].amount` equals `total`, to the smallest unit, and the amounts are those printed on the invoice.
+- **A credit note or cancellation** (negative `total`) has negative `net` and amounts.
 
 ### `record-payment` (scope `invoice:payment:record`, idempotent)
 
@@ -175,6 +189,7 @@ Besides the UCEP error codes, `data` MAY carry `{ "field": "…" }` with `INVALI
 
 ## Changes
 
+- **0.3.0**: `list-issued` names the VAT per rate and category (`vat`), the net total (`net`) and the customer's VAT ID (`customer.vatId`), all OPTIONAL. Additive: a 0.2.0 consumer keeps working against a 0.3.0 provider, and a 0.3.0 consumer treats their absence as "not said".
 - **0.2.0**: `list-issued` and `record-payment`, with the scopes `invoice:issued:read` and `invoice:payment:record`. Additive: a 0.1.0 consumer keeps working against a 0.2.0 provider ([ucep.md §3](../ucep.md#3-protocol-id)).
 
 [caip2]: https://github.com/ChainAgnostic/CAIPs/blob/main/CAIPs/caip-2.md
