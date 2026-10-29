@@ -2,11 +2,11 @@
 
 | Extension ID | Version | Status | Scopes |
 |--------------|---------|--------|--------|
-| `invoice` | 0.3.0 | Working Draft | yes |
+| `invoice` | 0.4.0 | Working Draft | yes |
 
-Protocol ID: `/uc/extension/invoice/0.3.0`
+Protocol ID: `/uc/extension/invoice/0.4.0`
 
-An invoicing app offers this extension so that other apps — typically a bookkeeping app — can ask it to create documents: a **self-issued receipt** (German *Eigenbeleg*) for a payment that has no third-party receipt, or an **invoice draft** the user finishes and issues in the invoicing app. Since 0.2.0 the bookkeeping app can also read the **issued invoices** and tell the invoicing app which of them were **paid**, and when: it holds the bank statements, the invoicing app does not. Since 0.3.0 a listed invoice carries its **VAT per rate** and the customer's **VAT ID**, so the bookkeeping app can show output VAT, the VAT payable and the intra-EU supplies for the EC Sales List without reading the PDF. The reference provider is the Invoice PWA (Le-Space); the reference consumer is Belege.
+An invoicing app offers this extension so that other apps — typically a bookkeeping app — can ask it to create documents: a **self-issued receipt** (German *Eigenbeleg*) for a payment that has no third-party receipt, or an **invoice draft** the user finishes and issues in the invoicing app. Since 0.2.0 the bookkeeping app can also read the **issued invoices** and tell the invoicing app which of them were **paid**, and when: it holds the bank statements, the invoicing app does not. Since 0.3.0 a listed invoice carries its **VAT per rate** and the customer's **VAT ID**, so the bookkeeping app can show output VAT, the VAT payable and the intra-EU supplies for the EC Sales List without reading the PDF. Since 0.4.0 it can fetch the **XRechnung** of an invoice issued as one, which is that invoice's original. The reference provider is the Invoice PWA (Le-Space); the reference consumer is Belege.
 
 All examples use made-up data.
 
@@ -21,7 +21,7 @@ An invoice is issued by a seller to a buyer and must meet the seller's legal req
 | `invoice:eigenbeleg:create` | Create self-issued receipts (Eigenbelege) in your name. |
 | `invoice:draft:create` | Create invoice drafts. Drafts are only issued when you issue them in the invoicing app. |
 | `invoice:document:read` | Read documents this app created, including their PDF. |
-| `invoice:issued:read` | Read your issued invoices – number, customer name, amounts, dates – and their PDFs, to match them with payments. |
+| `invoice:issued:read` | Read your issued invoices – number, customer name, amounts, dates – and their PDFs and XRechnungen, to match them with payments. |
 | `invoice:payment:record` | Record that an issued invoice was paid, and when. |
 
 A grant for `invoice:document:read` only covers documents created under the **same grant**. It never reveals other documents of the provider. `invoice:issued:read` is the exception by design: it covers every issued invoice, whoever created it, and nothing else (no drafts, no self-issued receipts).
@@ -127,6 +127,7 @@ Result:
       "issuedOn": "2026-09-01",
       "dueOn": "2026-09-15",
       "customer": { "name": "Beispiel Kunde GmbH", "vatId": "DE000000000" },
+      "formats": ["pdf", "xrechnung"],
       "total": { "value": "119.00", "currency": "EUR" },
       "net": { "value": "100.00", "currency": "EUR" },
       "vat": [
@@ -145,13 +146,14 @@ Result:
 | `state` | `issued` or `cancelled`. Drafts are never listed. |
 | `dueOn` | The issue date plus the payment terms. OPTIONAL. |
 | `customer.vatId` | The customer's VAT ID as printed on the invoice (BT-48). OPTIONAL; absent when the invoice names none. Since 0.3.0. |
+| `formats` | The files the provider hands over for this invoice: `pdf` by `get-pdf`, `xrechnung` by `get-xml`. OPTIONAL; absent means "not said", and the consumer may still ask `get-pdf`. Since 0.4.0. |
 | `total` | The gross amount the customer owes. |
 | `net` | The total without VAT (BT-109). OPTIONAL. Since 0.3.0. |
 | `vat` | The VAT per rate and category, as the invoice's VAT breakdown (BG-23): `rate` the percentage as a decimal string (BT-119: `"19"`, `"7"`, `"0"`), `category` the code of UNTDID 5305 as EN 16931 uses it (BT-118: `S` standard, `Z` zero, `E` exempt – also a small business under §19 UStG –, `AE` reverse charge, `K` intra-EU supply, `G` export, `O` not subject to VAT), `amount` the VAT of that group (BT-117) in the invoice's currency. OPTIONAL. Since 0.3.0. |
 | `paid`, `payments` | What `record-payment` recorded: the sum, and each payment as `{ "paidOn", "amount", "reference" }`. |
 | `next` | A cursor for the next page, or `null`. |
 
-The PDF of a listed invoice is fetched with `get-pdf`; a grant with `invoice:issued:read` covers it.
+The PDF of a listed invoice is fetched with `get-pdf`, its XRechnung with `get-xml`; a grant with `invoice:issued:read` covers both.
 
 On `net` and `vat` (since 0.3.0):
 
@@ -159,6 +161,18 @@ On `net` and `vat` (since 0.3.0):
 - **An invoice without VAT** lists its breakdown with amount 0 and the category that says why (`E`, `AE`, `K`, `G`, `O`, `Z`), so the consumer can tell a small business from a reverse charge or an export. A provider that has no category for it MAY send `"vat": []`.
 - **Exact amounts:** `net` plus the sum of `vat[].amount` equals `total`, to the smallest unit, and the amounts are those printed on the invoice.
 - **A credit note or cancellation** (negative `total`) has negative `net` and amounts.
+
+### `get-xml` (scope `invoice:issued:read`)
+
+Since 0.4.0. Arguments: `{ "documentId": "…" }`, an invoice `list-issued` lists with `xrechnung` among its `formats`.
+
+Returns the invoice's **XRechnung**: UN/CEFACT CII D16B, CIUS XRechnung 3.0, EN 16931. For an invoice issued as XRechnung the XML is the original and the PDF a copy, so a bookkeeping app SHOULD keep the XML beside the PDF.
+
+Result: `{ "mime": "application/xml", "cid", "size", "sha256" }`, and additionally `base64` when the response stays within the connection's limit with it ([ucep.md §11](../ucep.md#11-limits)): on a relayed connection that is an XML below about 44 KiB, since base64 adds a third and the response may weigh 64 KiB; on a direct connection the 700 KiB of `get-pdf` apply. Otherwise the consumer fetches the file by CID, as for `get-pdf`.
+
+- **Only issued invoices** have an XRechnung, so `invoice:document:read` does not open this command.
+- **An issued invoice without an XRechnung** – its customer gets a PDF – gives `INVALID_ARGUMENTS` (`field: "documentId"`) that says so. The grant may know that the invoice exists. A draft, a self-issued receipt or an unknown `documentId` gives the `INVALID_ARGUMENTS` of an unknown document.
+- **More than the PDF prints:** the XML names the customer's e-mail address for invoices (BT-49) and the buyer reference (BT-10), which a PDF need not print. A provider SHOULD say so where it explains `invoice:issued:read` to its user.
 
 ### `record-payment` (scope `invoice:payment:record`, idempotent)
 
@@ -189,6 +203,7 @@ Besides the UCEP error codes, `data` MAY carry `{ "field": "…" }` with `INVALI
 
 ## Changes
 
+- **0.4.0**: `get-xml` returns the XRechnung of an issued invoice, and `list-issued` names each invoice's `formats`. Additive: a 0.3.0 consumer keeps working against a 0.4.0 provider, and treats an absent `formats` as "not said". `invoice:issued:read` opens `get-xml`, so a grant given before 0.4.0 covers it.
 - **0.3.0**: `list-issued` names the VAT per rate and category (`vat`), the net total (`net`) and the customer's VAT ID (`customer.vatId`), all OPTIONAL. Additive: a 0.2.0 consumer keeps working against a 0.3.0 provider, and a 0.3.0 consumer treats their absence as "not said".
 - **0.2.0**: `list-issued` and `record-payment`, with the scopes `invoice:issued:read` and `invoice:payment:record`. Additive: a 0.1.0 consumer keeps working against a 0.2.0 provider ([ucep.md §3](../ucep.md#3-protocol-id)).
 
