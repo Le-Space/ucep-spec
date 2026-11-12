@@ -153,8 +153,8 @@ This revision is written for peers that run **in browsers and mobile apps**. Suc
 
 Other transports (TCP, QUIC between servers) work unchanged, but nothing in this revision depends on them. Requirements:
 
-1. **Limited connections.** Relayed connections are *limited*: relays cap their duration and the bytes they carry (js-libp2p defaults: 2 minutes, 128 KiB). Providers MUST accept, and consumers MUST be able to open, UCEP streams on limited connections (js-libp2p: `runOnLimitedConnection: true` for `handle` and `dialProtocol`), so that the manifest and pairing work before a direct connection exists.
-2. **Prefer direct.** A consumer SHOULD open a direct WebRTC connection (dial the `/p2p-circuit/webrtc/` address) before it calls commands, and MUST do so before a command whose result may exceed 64 KiB. On a limited connection a provider MUST NOT send a response larger than 64 KiB; it answers `TOO_LARGE` instead, and the consumer retries after upgrading.
+1. **Limited connections.** Relayed connections are *limited*: relays cap their duration and the bytes they carry (js-libp2p defaults: 2 minutes, 128 KiB), and tell both ends the limit. For the size of a response ([§11](#11-limits)), a relayed connection counts as limited only when its data limit is below 32 MiB; one whose relay grants at least that, or limits only its duration, is treated like a direct one. Providers MUST accept, and consumers MUST be able to open, UCEP streams on limited connections (js-libp2p: `runOnLimitedConnection: true` for `handle` and `dialProtocol`), so that the manifest and pairing work before a direct connection exists.
+2. **Prefer direct.** A consumer SHOULD open a direct WebRTC connection (dial the `/p2p-circuit/webrtc/` address) before it calls commands, and MUST do so before a command whose result may exceed 64 KiB while the only connection is limited. On a limited connection a provider MUST NOT send a response larger than 64 KiB; it answers `TOO_LARGE` instead, and the consumer retries after upgrading.
 3. **Relays see metadata.** A relay cannot read UCEP messages, but it learns which peers talk to each other, when, and how much. It also takes part in identify, so it learns which extensions a peer serves.
 4. **Peers come and go.** Browser tabs close and mobile apps are suspended in the background; their relay reservations lapse. Consumers MUST expect a provider to be unreachable, SHOULD retry idempotent commands with the same `requestId`, and SHOULD tell their user that the other app must be open. Pairing requires both apps to be open and in the foreground.
 5. **Stable identity.** Grants are bound to PeerIds ([ucep-auth.md §6](./ucep-auth.md#6-authorizing-commands)). A browser or mobile app that wants to keep its grants MUST keep its libp2p private key across reloads and restarts ([ucep-auth.md §11](./ucep-auth.md#11-storage)).
@@ -241,7 +241,7 @@ Unless an extension documents otherwise:
 | Item | Limit |
 |------|-------|
 | Request message | 64 KiB |
-| Response message | 1 MiB on a direct connection, 64 KiB on a limited (relayed) one |
+| Response message | 1 MiB on a direct connection, or a relayed one whose data limit is at least 32 MiB; 64 KiB on a limited one ([§5.1](#51-browser-mobile-and-relayed-connections)) |
 | `requestId` | 128 bytes |
 | Manifest `icon` (`data:` URI) | 32 KiB |
 | Concurrent streams per peer and protocol | 8 (providers MAY reject further streams) |
