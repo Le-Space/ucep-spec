@@ -168,7 +168,7 @@ Since 0.4.0. Arguments: `{ "documentId": "…" }`, an invoice `list-issued` list
 
 Returns the invoice's **XRechnung**: UN/CEFACT CII D16B, CIUS XRechnung 3.0, EN 16931. For an invoice issued as XRechnung the XML is the original and the PDF a copy, so a bookkeeping app SHOULD keep the XML beside the PDF.
 
-Result: `{ "mime": "application/xml", "cid", "size", "sha256" }`, and additionally `base64` when the response stays within the connection's limit with it ([ucep.md §11](../ucep.md#11-limits)): on a relayed connection that is an XML below about 44 KiB, since base64 adds a third and the response may weigh 64 KiB; on a direct connection the 700 KiB of `get-pdf` apply. Otherwise the consumer fetches the file by CID, as for `get-pdf`.
+Result: `{ "mime": "application/xml", "cid", "size", "sha256" }`, and additionally `base64` when the response stays within the connection's limit with it ([ucep.md §11](../ucep.md#11-limits)): on a limited (relayed) connection that is an XML below about 44 KiB, since base64 adds a third and the response may weigh 64 KiB; on a direct connection the 700 KiB of `get-pdf` apply. Otherwise the consumer fetches the file by CID, as for `get-pdf`.
 
 - **Only issued invoices** have an XRechnung, so `invoice:document:read` does not open this command.
 - **An issued invoice without an XRechnung** – its customer gets a PDF – gives `INVALID_ARGUMENTS` (`field: "documentId"`) that says so. The grant may know that the invoice exists. A draft, a self-issued receipt or an unknown `documentId` gives the `INVALID_ARGUMENTS` of an unknown document.
