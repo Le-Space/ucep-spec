@@ -28,6 +28,15 @@ message ExtensionManifest {
   uint32 ucepVersion = 9;                 // highest UCEP wire revision the provider speaks; 0 means 1 (0.1 draft)
   repeated PairingMode pairingModes = 10; // pairing modes the provider accepts; empty = no pairing
   repeated ScopeInfo scopes = 11;         // every scope any command may require
+  Limits limits = 12;                     // optional: larger limits of this extension (ucep.md §11); absent = defaults
+}
+
+// Limits an extension states above the defaults of ucep.md §11, in bytes.
+// 0 (absent), or a value below the default, means the default. They do not
+// apply on a limited connection (ucep.md §5.1), where 64 KiB holds.
+message Limits {
+  uint32 request = 1;                     // largest Request message the provider accepts; default 64 KiB
+  uint32 response = 2;                    // largest Response message the provider sends; default 1 MiB
 }
 
 enum PairingMode {
