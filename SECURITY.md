@@ -28,7 +28,7 @@ This document lists what UCEP protects against, what it does not, and which rule
 | T7 | A stolen consumer device keeps using its grant. | The provider lists grants with their last use and can revoke them; grants may expire. | auth §8 |
 | T8 | A consumer retries after a dropped stream and a document is created twice. | Idempotent commands with a 24-hour `requestId` replay window. | ucep §7 |
 | T9 | A provider returns hostile content (script in `data`, giant icon). | Results and manifests are untrusted: consumers validate, escape and enforce size limits. | ucep §6, §11, §12 |
-| T10 | Resource exhaustion through many or large requests. | Length-prefix check before buffering, timeouts, stream and rate limits. | ucep §5, §11 |
+| T10 | Resource exhaustion through many or large requests. | Length-prefix check before buffering, timeouts, stream and rate limits; limits above the defaults only for peers admitted before the protocol. | ucep §5, §11, §12 |
 | T11 | Identify reveals which extensions a node serves. | Accepted: discovery is public by design, to relays too. | ucep §4, §12 |
 | T12 | Unsolicited in-band pairing requests flood the provider's screen. | In-band requests only during a pairing window the human opened; one pending request per peer, at most 3 in total. | auth §5.2 |
 | T13 | An attacker races the legitimate consumer in-band and tries to show the same code. | Commit and reveal: neither side can steer the code; a forged match has probability 10⁻⁶ per visible, rate-limited attempt. | auth §5.2 |

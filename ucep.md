@@ -26,9 +26,11 @@ See the [lifecycle document][lifecycle] for context about the maturity level and
 - [9. Authorization](#9-authorization)
 - [10. Versioning and compatibility](#10-versioning-and-compatibility)
 - [11. Limits](#11-limits)
+  - [11.1 Limits stated in the manifest](#111-limits-stated-in-the-manifest)
 - [12. Security considerations](#12-security-considerations)
 - [13. User interface](#13-user-interface)
 - [Appendix A. Differences from the 0.1 draft](#appendix-a-differences-from-the-01-draft)
+- [Appendix B. Additions within revision 2](#appendix-b-additions-within-revision-2)
 
 ## 1. Introduction
 
@@ -153,7 +155,7 @@ This revision is written for peers that run **in browsers and mobile apps**. Suc
 
 Other transports (TCP, QUIC between servers) work unchanged, but nothing in this revision depends on them. Requirements:
 
-1. **Limited connections.** Relayed connections are *limited*: relays cap their duration and the bytes they carry (js-libp2p defaults: 2 minutes, 128 KiB), and tell both ends the limit. For the size of a response ([§11](#11-limits)), a relayed connection counts as limited only when its data limit is below 32 MiB; one whose relay grants at least that, or limits only its duration, is treated like a direct one. Providers MUST accept, and consumers MUST be able to open, UCEP streams on limited connections (js-libp2p: `runOnLimitedConnection: true` for `handle` and `dialProtocol`), so that the manifest and pairing work before a direct connection exists.
+1. **Limited connections.** Relayed connections are *limited*: relays cap their duration and the bytes they carry (js-libp2p defaults: 2 minutes, 128 KiB), and tell both ends the limit. For the size of a message ([§11](#11-limits)), a relayed connection counts as limited only when its data limit is below 32 MiB; one whose relay grants at least that, or limits only its duration, is treated like a direct one. Providers MUST accept, and consumers MUST be able to open, UCEP streams on limited connections (js-libp2p: `runOnLimitedConnection: true` for `handle` and `dialProtocol`), so that the manifest and pairing work before a direct connection exists.
 2. **Prefer direct.** A consumer SHOULD open a direct WebRTC connection (dial the `/p2p-circuit/webrtc/` address) before it calls commands, and MUST do so before a command whose result may exceed 64 KiB while the only connection is limited. On a limited connection a provider MUST NOT send a response larger than 64 KiB; it answers `TOO_LARGE` instead, and the consumer retries after upgrading.
 3. **Relays see metadata.** A relay cannot read UCEP messages, but it learns which peers talk to each other, when, and how much. It also takes part in identify, so it learns which extensions a peer serves.
 4. **Peers come and go.** Browser tabs close and mobile apps are suspended in the background; their relay reservations lapse. Consumers MUST expect a provider to be unreachable, SHOULD retry idempotent commands with the same `requestId`, and SHOULD tell their user that the other app must be open. Pairing requires both apps to be open and in the foreground.
@@ -169,6 +171,7 @@ The manifest describes the extension: `id`, `name`, `version`, `description`, `a
 - `pairingModes`: the pairing modes the provider accepts (`INVITATION`, `IN_BAND`); empty means no pairing.
 - `scopes`: every scope any command may require, with a human description.
 - per command: `scope` (empty means public), `argsSchema` and `resultSchema` (JSON Schema 2020-12, optional), and `idempotent`.
+- `limits` (optional): message sizes above the defaults that this extension accepts and sends ([§11](#11-limits)).
 
 Rules:
 
@@ -236,7 +239,7 @@ A revision-2 provider receiving a revision-1 consumer's request answers normally
 
 ## 11. Limits
 
-Unless an extension documents otherwise:
+Unless the extension's manifest states larger limits ([§11.1](#111-limits-stated-in-the-manifest)):
 
 | Item | Limit |
 |------|-------|
@@ -246,7 +249,20 @@ Unless an extension documents otherwise:
 | Manifest `icon` (`data:` URI) | 32 KiB |
 | Concurrent streams per peer and protocol | 8 (providers MAY reject further streams) |
 
-A provider MUST reject a longer length prefix before buffering the message.
+A provider MUST reject a longer length prefix before buffering the message, against the limit that applies to the connection: the default, or the limit it states.
+
+### 11.1 Limits stated in the manifest
+
+Some extensions need larger messages, for example one that receives the text of a long document with a request. The manifest's optional `limits` lets a provider say so:
+
+- `limits.request`: the largest `Request` message, in bytes, the provider accepts for this extension. `limits.response`: the largest `Response` message it sends on a connection that is not limited.
+- A provider MAY state values **above** the defaults. An absent `limits`, an absent or `0` field, or a value below the default means the default; a provider MUST accept at least the defaults.
+- A consumer sends a request of at most `min(its own limit, the provider's stated limit)`, and at most the default when the provider states none. A consumer that has not fetched the manifest assumes the defaults. A request over that limit SHOULD fail at the consumer with `TOO_LARGE`, before anything is sent.
+- A consumer reads a response of at most `min(its own limit, the provider's stated limit)`. A provider cannot know a consumer's own limit, so it SHOULD return results above the default by reference ([§7](#7-commands)), and a consumer that reads less than the provider states SHOULD treat a longer answer as `TOO_LARGE`.
+- On a **limited** connection ([§5.1](#51-browser-mobile-and-relayed-connections)) the stated limits do not apply: requests and responses stay at 64 KiB in both directions. A consumer SHOULD open a direct connection before it sends a request above 64 KiB.
+- A provider applies its stated limits to every peer of the extension; the limits are not negotiated per connection or per consumer.
+
+This is backward compatible in both directions. An older provider states no `limits`, so a newer consumer talks to it with the defaults. An older consumer ignores the field (proto3 unknown fields) and keeps to the defaults, which every provider accepts. No new wire revision is needed.
 
 ## 12. Security considerations
 
@@ -256,6 +272,7 @@ See [SECURITY.md](./SECURITY.md) for the threat model. The essentials:
 - **Discovery is public.** Identify tells every connected peer — relays included — which extensions a node serves. libp2p registers protocol handlers per node, not per connection, so a node cannot hide an extension from some peers; it serves an extension only while it is willing to be seen offering it.
 - **Results are untrusted input.** Consumers MUST validate `data` against the `resultSchema` or their own expectations and MUST NOT execute or render it unescaped.
 - **Rate limiting.** Providers SHOULD limit requests per PeerId and pairing attempts per invitation.
+- **Stated limits.** A limit above the default lets any peer that can open the stream make the provider buffer that much, up to eight streams at a time ([§11](#11-limits)). A provider SHOULD state a larger limit only when it admits peers before the protocol runs, for example behind a gate of known devices, and SHOULD keep it as small as its extension needs.
 - **No trust in broadcasts.** Extension claims from pubsub or any third party are hints; only identify and the manifest from the provider itself count ([§4](#4-discovery)).
 - **Online checks.** Dialing a provider reveals the consumer's interest in it to the provider and to relays; consumers check only when needed and within the limits of [§4.1](#41-catalogue-and-online-status).
 
@@ -309,6 +326,13 @@ The 0.1 draft is the protocol implemented in `NiKrause/js-libp2p-examples` (bran
 9. adds the catalogue with online status, adding a provider by PeerId or provider link, and the user interface; states that discovery never uses pubsub broadcasts.
 
 All 0.1 field numbers are unchanged.
+
+## Appendix B. Additions within revision 2
+
+Additions that keep the wire revision at 2, since a peer that does not know them still interoperates:
+
+1. A relayed connection whose relay grants at least 32 MiB is not limited for the size of a response ([§5.1](#51-browser-mobile-and-relayed-connections)).
+2. The manifest's optional `limits` ([§11.1](#111-limits-stated-in-the-manifest)), field 12 of `ExtensionManifest`. Backward compatible in both directions: an older provider states none and is talked to with the defaults; an older consumer ignores it and keeps to the defaults.
 
 [lifecycle]: https://github.com/libp2p/specs/blob/master/00-framework-01-spec-lifecycle.md
 [identify]: https://github.com/libp2p/specs/blob/master/identify/README.md
